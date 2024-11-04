@@ -97,7 +97,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
       // XR globals.
       let xrButton = null;
-      //new
+      // new
       let xrButtonNeu = null;
       let xrImmersiveRefSpace = null;
       let xrInlineRefSpace = null;
@@ -109,7 +109,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       let solarSystem = new Gltf2Node({url: 'media/gltf/space/space.gltf'});
       scene.addNode(solarSystem);
       // scene.addNode(new SkyboxNode({url: 'media/textures/milky-way-4k.png'}));
-      //new
+      // new
       let skybox = new SkyboxNode({url: 'media/textures/milky-way-4k.png'});
       scene.addNode(skybox);
       let arStartedNeu;
@@ -127,7 +127,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
              textExitXRTitle: "EXIT  AR",
         });
         document.querySelector('header').appendChild(xrButton.domElement);
-        //new
+        // new
         document.querySelector('header').appendChild(xrButtonNeu.domElement);
 
         if (navigator.xr) {
@@ -175,7 +175,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       function onSessionStarted(session) {
         session.addEventListener('end', onSessionEnded);
         // new
-        if (session.isImmersive) {
+        if (session.isImmersive && arStartedNeu) {
           // When in 'immersive-ar' mode don't draw an opaque background because
           // we want the real world to show through.
           skybox.visible = false;
@@ -249,7 +249,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         if (event.session.isImmersive) {
           xrButton.setSession(null);
           // new
-          skybox.visible = true;
+          if(arStartedNeu) {
+            skybox.visible = true;
+            arStartedNeu = false;
+          }
         }
       }
 
