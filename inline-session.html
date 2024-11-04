@@ -97,6 +97,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
       // XR globals.
       let xrButton = null;
+      //new
+      let xrButtonNeu = null;
       let xrImmersiveRefSpace = null;
       let xrInlineRefSpace = null;
 
@@ -106,23 +108,41 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       let scene = new Scene();
       let solarSystem = new Gltf2Node({url: 'media/gltf/space/space.gltf'});
       scene.addNode(solarSystem);
-      scene.addNode(new SkyboxNode({url: 'media/textures/milky-way-4k.png'}));
+      // scene.addNode(new SkyboxNode({url: 'media/textures/milky-way-4k.png'}));
+      //new
+      let skybox = new SkyboxNode({url: 'media/textures/milky-way-4k.png'});
+      scene.addNode(skybox);
+      let arStartedNeu;
 
       function initXR() {
         xrButton = new WebXRButton({
           onRequestSession: onRequestSession,
           onEndSession: onEndSession
         });
+        xrButtonNeu = new WebXRButton({
+              onRequestSession: onRequestSessionNeu,
+              onEndSession: onEndSession,
+              textEnterXRTitle: "START AR",
+              textXRNotFoundTitle: "AR NOT FOUND",
+             textExitXRTitle: "EXIT  AR",
+        });
         document.querySelector('header').appendChild(xrButton.domElement);
+        //new
+        document.querySelector('header').appendChild(xrButtonNeu.domElement);
 
         if (navigator.xr) {
           navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
             xrButton.enabled = supported;
           });
-
+          // new
+          navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+            xrButtonNeu.enabled = supported;
+          });
           // Start up an inline session, which should always be supported on
           // browsers that support WebXR regardless of the available hardware.
           navigator.xr.requestSession('inline').then((session) => {
+            // new
+            arStartedNeu = false;
             inlineSession = session;
             onSessionStarted(session);
             updateFov();
@@ -140,8 +160,28 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         });
       }
 
+       // new
+       function onRequestSessionNeu() {
+            return navigator.xr.requestSession('immersive-ar').then((session) => {
+                xrButtonNeu.setSession(session);
+               // Set a flag on the session so we can differentiate it from the
+               // inline session.
+               session.isImmersive = true;
+               arStartedNeu = true;
+               onSessionStarted(session);
+           });
+        }
+
       function onSessionStarted(session) {
         session.addEventListener('end', onSessionEnded);
+        // new
+        xrImmersiveRefSpace.addEventListener('reset', (evt) => {
+            if (evt.transform) {
+              // AR experiences typically should stay grounded to the real world.
+              // If there's a known origin shift, compensate for it here.
+              xrImmersiveRefSpace = xrImmersiveRefSpace.getOffsetReferenceSpace(evt.transform);
+            }
+        });
 
         if (!gl) {
           gl = createWebGLContext({
@@ -166,6 +206,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
           // Installs the listeners necessary to allow users to look around with
           // inline sessions using the mouse or touch.
           addInlineViewListeners(gl.canvas);
+
 
           renderer = new Renderer(gl);
 
@@ -202,7 +243,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       function onSessionEnded(event) {
         // Only reset the button when the immersive session ends.
         if (event.session.isImmersive) {
-          xrButton.setSession(null);
+          xrButton.setSession(null); 
+        }
+        // new
+        if (session.isImmersive && arStartedNeu) {
+          // When in 'immersive-ar' mode don't draw an opaque background because
+          // we want the real world to show through.
+          skybox.visible = false;
         }
       }
 
